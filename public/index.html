@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Downloader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #0d1117;
+            color: #e6edf3;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #f8bfd6;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #8b949e;
+        }
+
+        .input-section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .url-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 12px 16px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            color: #e6edf3;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .url-input:focus {
+            border-color: #f8bfd6;
+            box-shadow: 0 0 0 3px rgba(248, 191, 214, 0.1);
+        }
+
+        .url-input::placeholder {
+            color: #8b949e;
+        }
+
+        .fetch-btn {
+            padding: 12px 24px;
+            background-color: #f8bfd6;
+            color: #0d1117;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .fetch-btn:hover {
+            background-color: #f5a8c7;
+            transform: translateY(-1px);
+        }
+
+        .fetch-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .status.loading {
+            background: rgba(56, 139, 253, 0.1);
+            border: 1px solid rgba(56, 139, 253, 0.3);
+            color: #58a6ff;
+        }
+
+        .status.success {
+            background: rgba(63, 185, 80, 0.1);
+            border: 1px solid rgba(63, 185, 80, 0.3);
+            color: #3fb950;
+        }
+
+        .status.error {
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid rgba(248, 81, 73, 0.3);
+            color: #f85149;
+        }
+
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .results-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f8bfd6;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .video-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .video-card:hover {
+            border-color: #f8bfd6;
+            transform: translateY(-2px);
+        }
+
+        .video-preview {
+            width: 100%;
+            height: 200px;
+            background: #0d1117;
+            object-fit: contain;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .video-info {
+            padding: 20px;
+        }
+
+        .video-url {
+            font-size: 0.9rem;
+            color: #8b949e;
+            background: #0d1117;
+            padding: 8px 12px;
+            border-radius: 6px;
+            word-break: break-all;
+            margin-bottom: 15px;
+            border: 1px solid #21262d;
+        }
+
+        .video-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .video-type {
+            background: #f8bfd6;
+            color: #0d1117;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .video-source {
+            color: #8b949e;
+            font-size: 0.85rem;
+        }
+
+        .video-metadata {
+            margin: 10px 0;
+            padding: 8px;
+            background: #0d1117;
+            border-radius: 4px;
+            border: 1px solid #30363d;
+        }
+
+        .metadata-item {
+            color: #8b949e;
+            font-size: 0.8rem;
+            margin: 2px 0;
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #f8bfd6;
+            color: #0d1117;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .download-btn:hover {
+            background-color: #f5a8c7;
+            transform: translateY(-1px);
+        }
+
+        .no-videos {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8b949e;
+        }
+
+        .no-videos h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #e6edf3;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid #0d1117;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-text {
+            color: #f85149;
+            margin-top: 10px;
+        }
+
+        /* Enhanced Mobile Responsiveness */
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 20px 10px;
+                margin-bottom: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+                line-height: 1.2;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .input-section, .history-section {
+                padding: 15px;
+                margin-bottom: 20px;
+                border-radius: 8px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .url-input {
+                min-width: unset;
+                padding: 15px;
+                font-size: 16px; /* Prevents zoom on iOS */
+                border-radius: 8px;
+            }
+            
+            .fetch-btn {
+                padding: 15px 20px;
+                font-size: 16px;
+                width: 100%;
+                border-radius: 8px;
+            }
+            
+            .history-item {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 12px;
+                gap: 8px;
+            }
+            
+            .history-url {
+                font-size: 0.85rem;
+                white-space: normal;
+                word-break: break-all;
+                line-height: 1.4;
+            }
+            
+            .history-date {
+                margin-left: 0;
+                align-self: flex-end;
+            }
+            
+            .history-delete {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                padding: 8px;
+                margin: 0;
+            }
+            
+            .history-item {
+                position: relative;
+                padding-right: 40px;
+            }
+            
+            .video-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .video-card {
+                border-radius: 8px;
+            }
+            
+            .video-info {
+                padding: 15px;
+            }
+            
+            .video-details {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .video-url {
+                font-size: 0.8rem;
+                padding: 8px 10px;
+            }
+            
+            .download-btn {
+                padding: 12px;
+                font-size: 16px;
+                border-radius: 8px;
+            }
+            
+            .clear-history-btn {
+                width: 100%;
+                padding: 12px;
+                font-size: 16px;
+                margin-top: 15px;
+            }
+            
+            .status {
+                padding: 12px;
+                font-size: 14px;
+                margin-top: 15px;
+            }
+            
+            .results-title {
+                font-size: 1.3rem;
+                margin-bottom: 15px;
+            }
+            
+            .no-videos {
+                padding: 40px 15px;
+            }
+        }
+        
+        @media (min-width: 481px) and (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header {
+                padding: 30px 15px;
+                margin-bottom: 30px;
+            }
+            
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .url-input {
+                min-width: unset;
+                font-size: 16px;
+            }
+            
+            .fetch-btn {
+                width: 100%;
+            }
+            
+            .video-grid {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+            
+            .input-section, .history-section {
+                padding: 20px;
+            }
+        }
+        
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .video-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+        }
+        
+        /* Touch-friendly improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .history-item:hover {
+                border-color: #30363d;
+                background: #0d1117;
+            }
+            
+            .video-card:hover {
+                border-color: #30363d;
+                transform: none;
+            }
+            
+            .fetch-btn:hover {
+                background-color: #f8bfd6;
+                transform: none;
+            }
+            
+            .download-btn:hover {
+                background-color: #f8bfd6;
+                transform: none;
+            }
+            
+            .clear-history-btn:hover {
+                background-color: #f85149;
+            }
+            
+            /* Larger touch targets */
+            .history-delete {
+                min-width: 44px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .fetch-btn, .download-btn, .clear-history-btn {
+                min-height: 44px;
+            }
+        }
+
+        /* Hide default video controls styling */
+        video::-webkit-media-controls-panel {
+            background-color: #161b22;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Video Downloader</h1>
+            <p>Extract and download videos from any webpage</p>
+        </div>
+        
+
+        
+        <div class="input-section">
+            <div class="input-group">
+                <input type="text" class="url-input" placeholder="Enter URL (e.g., https://example.com/video)" id="urlInput">
+                <button class="fetch-btn" id="fetchBtn">
+                    <span class="btn-text">Fetch Videos</span>
+                </button>
+            </div>
+            <div id="status" class="status" style="display: none;"></div>
+        </div>
+        
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <h2 class="results-title">Found Videos</h2>
+            <div class="video-grid" id="videoGrid"></div>
+        </div>
+    </div>
+
+    <script>
+
+        
+        document.getElementById('fetchBtn').addEventListener('click', fetchVideos);
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                fetchVideos();
+            }
+        });
+        
+
+
+        async function fetchVideos() {
+            const urlInput = document.getElementById('urlInput');
+            const fetchBtn = document.getElementById('fetchBtn');
+            const status = document.getElementById('status');
+            const resultsSection = document.getElementById('resultsSection');
+            
+            const inputUrl = urlInput.value.trim();
+            if (!inputUrl) {
+                showStatus('Please enter a URL', 'error');
+                return;
+            }
+
+            fetchBtn.disabled = true;
+            fetchBtn.innerHTML = '<div class="loading-spinner"></div>Fetching...';
+            showStatus('Fetching webpage content...', 'loading');
+            resultsSection.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/fetch-videos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: inputUrl })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch videos');
+                }
+
+                if (data.videos.length === 0) {
+                    showStatus('No videos found on this page', 'error');
+                } else {
+                    showStatus(`Found ${data.videos.length} video(s)`, 'success');
+                    displayVideos(data.videos, data.url);
+
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                fetchBtn.disabled = false;
+                fetchBtn.innerHTML = 'Fetch Videos';
+            }
+        }
+
+        function displayVideos(videos, baseUrl) {
+            const resultsSection = document.getElementById('resultsSection');
+            const videoGrid = document.getElementById('videoGrid');
+            
+            videoGrid.innerHTML = '';
+            
+            if (videos.length === 0) {
+                videoGrid.innerHTML = `
+                    <div class="no-videos">
+                        <h3>No videos found</h3>
+                        <p>Try a different URL or check if the page contains video content.</p>
+                    </div>
+                `;
+            } else {
+                videos.forEach((video, index) => {
+                    const videoCard = createVideoCard(video, index, baseUrl);
+                    videoGrid.appendChild(videoCard);
+                });
+            }
+            
+            resultsSection.style.display = 'block';
+        }
+
+        function createVideoCard(video, index, baseUrl) {
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            
+            const fileName = getFileName(video.url) || `video_${index + 1}`;
+            const displayUrl = video.url.length > 60 ? video.url.substring(0, 60) + '...' : video.url;
+            
+            // format file size
+            const formatFileSize = (bytes) => {
+                if (!bytes) return 'Unknown';
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+            };
+            
+            const fileSize = video.fileSize ? formatFileSize(video.fileSize) : 'Unknown';
+            const format = video.format || 'mp4';
+            const resolution = video.resolution || 'Unknown';
+            
+            // determine proper mime type
+            const getMimeType = (url, format) => {
+                const ext = url.split('.').pop().toLowerCase().split('?')[0];
+                const mimeTypes = {
+                    'mp4': 'video/mp4',
+                    'webm': 'video/webm',
+                    'ogg': 'video/ogg',
+                    'avi': 'video/x-msvideo',
+                    'mov': 'video/quicktime',
+                    'wmv': 'video/x-ms-wmv',
+                    'flv': 'video/x-flv',
+                    'm4v': 'video/mp4'
+                };
+                return mimeTypes[ext] || mimeTypes[format] || 'video/mp4';
+            };
+            
+            const mimeType = getMimeType(video.url, format);
+            
+            card.innerHTML = `
+                <video class="video-preview" preload="metadata" muted controls>
+                    <source src="${video.url}" type="${mimeType}">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="video-info">
+                    <div class="video-url">${displayUrl}</div>
+                    <div class="video-details">
+                        <span class="video-type">${getTypeLabel(video.type)}</span>
+                        <span class="video-source">${fileName}</span>
+                    </div>
+                    <div class="video-metadata">
+                        <div class="metadata-item">Size: ${fileSize}</div>
+                        <div class="metadata-item">Format: ${format.toUpperCase()}</div>
+                        <div class="metadata-item">Resolution: ${resolution}</div>
+                    </div>
+                    <button class="download-btn" onclick="downloadVideo('${video.url}', '${fileName}')">
+                        Download Video
+                    </button>
+                </div>
+            `;
+            
+            // Handle video load errors
+            const videoElement = card.querySelector('video');
+            videoElement.addEventListener('error', function() {
+                this.style.display = 'none';
+                const placeholder = document.createElement('div');
+                placeholder.className = 'video-preview';
+                placeholder.style.display = 'flex';
+                placeholder.style.alignItems = 'center';
+                placeholder.style.justifyContent = 'center';
+                placeholder.style.color = '#8b949e';
+                placeholder.textContent = 'Preview unavailable';
+                this.parentNode.insertBefore(placeholder, this);
+            });
+            
+            return card;
+        }
+
+        function getFileName(url) {
+            try {
+                const pathname = new URL(url).pathname;
+                return pathname.split('/').pop().split('?')[0] || null;
+            } catch (e) {
+                return url.split('/').pop().split('?')[0] || null;
+            }
+        }
+
+        function getTypeLabel(type) {
+            const labels = {
+                'video-tag': 'Video Tag',
+                'link': 'Link',
+                'regex-match': 'Found in Source'
+            };
+            return labels[type] || type;
+        }
+
+        function downloadVideo(url, filename) {
+            // force download using fetch and blob
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    const link = document.createElement('a');
+                    const objectUrl = URL.createObjectURL(blob);
+                    link.href = objectUrl;
+                    link.download = filename || 'video.mp4';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(objectUrl);
+                })
+                .catch(error => {
+                    console.error('Download failed:', error);
+                    // fallback to direct link if fetch fails
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename || 'video.mp4';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>

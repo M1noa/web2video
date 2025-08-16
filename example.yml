@@ -1,0 +1,54 @@
+# Web2Video Configuration Example
+# This file demonstrates all available configuration options
+# Copy this to config.yml and modify as needed
+
+# Flaresolverr settings for bypassing Cloudflare protection
+flaresolverr:
+  enabled: true
+  # Multiple URLs for failover support - system will try each in order
+  urls:
+    - "http://localhost:7001"
+    # Add additional FlareSolverr instances for failover
+    # - "http://192.168.1.224:8191"
+    # - "http://localhost:8191"
+  port: 8191
+  maxTimeout: 10000
+  session:
+    enabled: true
+    id: "web2video_session"
+
+
+
+# Request settings - fine-tune retry behavior
+requests:
+  timeout: 8000              # Base timeout for requests
+  maxRetries: 3              # Total retry attempts
+  retryDelay: 1110           # Delay between retries (ms)
+  normalRetries: 0           # Normal HTTP request retries
+  flaresolverrRetries: 2     # FlareSolverr retries per URL
+  bypassRetries: 1           # Bypass method retries
+  userAgents:
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15"
+    - "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0"
+
+# Server settings
+server:
+  port: 3000
+  cors:
+    enabled: true
+    origins: ["*"]            # Allow all origins (use specific domains in production)
+
+# Video extraction settings
+video:
+  extensions:                # Supported video file extensions
+    - ".mp4"
+    - ".webm"
+    - ".ogg"
+    - ".avi"
+    - ".mov"
+    - ".wmv"
+    - ".flv"
+    - ".mkv"
+    - ".m4v"

@@ -4,6 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Downloader</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Video Downloader">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#f8bfd6">
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
     <style>
         * {
             margin: 0;
@@ -607,7 +622,7 @@
             card.className = 'video-card';
             
             const fileName = getFileName(video.url) || `video_${index + 1}`;
-            const displayUrl = video.url.length > 60 ? video.url.substring(0, 60) + '...' : video.url;
+            const displayUrl = video.url;
             
             // format file size
             const formatFileSize = (bytes) => {
@@ -650,12 +665,8 @@
                         <span class="video-type">${getTypeLabel(video.type)}</span>
                         <span class="video-source">${fileName}</span>
                     </div>
-                    <div class="video-metadata">
-                        <div class="metadata-item">Size: ${fileSize}</div>
-                        <div class="metadata-item">Format: ${format.toUpperCase()}</div>
-                        <div class="metadata-item">Resolution: ${resolution}</div>
-                    </div>
-                    <button class="download-btn" onclick="downloadVideo('${video.url}', '${fileName}')">
+
+                    <button class="download-btn" onclick="window.open('${video.url}', '_blank')">
                         Download Video
                     </button>
                 </div>
@@ -696,36 +707,7 @@
             return labels[type] || type;
         }
 
-        function downloadVideo(url, filename) {
-            // force download using fetch and blob
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.blob();
-                })
-                .then(blob => {
-                    const link = document.createElement('a');
-                    const objectUrl = URL.createObjectURL(blob);
-                    link.href = objectUrl;
-                    link.download = filename || 'video.mp4';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(objectUrl);
-                })
-                .catch(error => {
-                    console.error('Download failed:', error);
-                    // fallback to direct link if fetch fails
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = filename || 'video.mp4';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                });
-        }
+
 
         function showStatus(message, type) {
             const status = document.getElementById('status');
@@ -738,6 +720,21 @@
                     status.style.display = 'none';
                 }, 5000);
             }
+        }
+    </script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
         }
     </script>
 </body>

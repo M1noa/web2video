@@ -273,6 +273,15 @@ export function extractVideos(
   const extensions = videoExtensions || cfg.video.extensions;
   const $ = cheerio.load(html);
   const videos: VideoInfo[] = [];
+  
+  // image extensions to filter out
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico', '.tiff', '.tif'];
+  
+  // helper function to check if url is an image
+  const isImageFile = (url: string): boolean => {
+    const lowerUrl = url.toLowerCase();
+    return imageExtensions.some(ext => lowerUrl.includes(ext));
+  };
 
   // find video tags with enhanced support
   try {
@@ -281,7 +290,7 @@ export function extractVideos(
       let mainSrc = $video.attr('src');
       
       // if video has direct src attribute
-       if (mainSrc) {
+       if (mainSrc && !isImageFile(mainSrc)) {
          try {
            const posterAttr = $video.attr('poster');
            videos.push({
@@ -301,7 +310,7 @@ export function extractVideos(
         const $source = $(sourceElem);
         const sourceSrc = $source.attr('src');
         
-        if (sourceSrc) {
+        if (sourceSrc && !isImageFile(sourceSrc)) {
           try {
             const resolvedUrl = resolveUrl(sourceSrc, baseUrl);
             // avoid duplicates
@@ -323,7 +332,7 @@ export function extractVideos(
       // if no src found in video or source tags, try data attributes
       if (!mainSrc && $video.find('source').length === 0) {
         const dataSrc = $video.attr('data-src') || $video.attr('data-video-src');
-        if (dataSrc) {
+        if (dataSrc && !isImageFile(dataSrc)) {
           try {
             videos.push({
               url: resolveUrl(dataSrc, baseUrl),
@@ -340,12 +349,12 @@ export function extractVideos(
     console.warn('error parsing video tags:', videoParseError.message);
   }
 
-  // find links to video files (exclude favicons)
+  // find links to video files (exclude favicons and images)
   $('a[href]').each((i, elem) => {
     const href = $(elem).attr('href');
     if (href && extensions.some(ext => href.toLowerCase().includes(ext))) {
-      // exclude favicon urls
-      if (href.toLowerCase().includes('favicon') || href.toLowerCase().includes('favi')) {
+      // exclude favicon urls and image files
+      if (href.toLowerCase().includes('favicon') || href.toLowerCase().includes('favi') || isImageFile(href)) {
         return;
       }
       videos.push({
@@ -373,8 +382,8 @@ export function extractVideos(
       const matches = html.match(videoUrlPattern) || [];
       
       matches.forEach(match => {
-        // exclude favicon urls from regex matches
-        if (match.toLowerCase().includes('favicon') || match.toLowerCase().includes('favi')) {
+        // exclude favicon urls and image files from regex matches
+        if (match.toLowerCase().includes('favicon') || match.toLowerCase().includes('favi') || isImageFile(match)) {
           return;
         }
         if (!videos.some(v => v.url === match)) {

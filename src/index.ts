@@ -68,19 +68,57 @@ app.post('/api/fetch-videos', async (req: Request, res: Response) => {
 
     console.log(`Fetching: ${url}`);
 
-    // use enhanced fetch with bypass capabilities
-    const response = await fetchWithBypass(url, {
-      timeout: config.requests.timeout,
-      maxRedirects: 5
-    });
+    let videos: VideoInfo[] = [];
+    let lastError: Error | null = null;
+    const maxRetries = config.requests.maxRetries || 3;
+    
+    // retry logic when no videos are found
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`Attempt ${attempt}/${maxRetries} for: ${url}`);
+        
+        // use enhanced fetch with bypass capabilities
+        const response = await fetchWithBypass(url, {
+          timeout: config.requests.timeout,
+          maxRedirects: 5
+        });
 
-    const videos = extractVideos(response.data, url, config.video.extensions);
+        videos = extractVideos(response.data, url, config.video.extensions);
+        
+        // if videos found, break out of retry loop
+        if (videos.length > 0) {
+          console.log(`Found ${videos.length} videos on attempt ${attempt}`);
+          break;
+        }
+        
+        // if no videos found and not the last attempt, wait before retrying
+        if (attempt < maxRetries) {
+          console.log(`No videos found on attempt ${attempt}, retrying in ${config.requests.retryDelay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, config.requests.retryDelay));
+        }
+        
+      } catch (error: any) {
+        lastError = error;
+        console.warn(`Attempt ${attempt} failed:`, error.message);
+        
+        // if not the last attempt, wait before retrying
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, config.requests.retryDelay));
+        }
+      }
+    }
+    
+    // if still no videos found after all retries, but no error occurred
+    if (videos.length === 0 && !lastError) {
+      console.log(`No videos found after ${maxRetries} attempts`);
+    }
     
     return res.json({
       success: true,
       url: url,
       videos: videos,
-      count: videos.length
+      count: videos.length,
+      attempts: videos.length > 0 ? undefined : maxRetries
     });
 
   } catch (error: any) {
